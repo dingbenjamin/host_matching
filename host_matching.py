@@ -1,37 +1,15 @@
-import heapq
-import sys
-import pyevolve
-import numpy as np
-import numpy.ma as ma
-import pymongo
-import bson
-import sys
-import heapq
-import networkx as nx
-
-from bson.codec_options import CodecOptions
-from bson import Binary, Code
-from bson.json_util import dumps
+from pyevolve import G1DList, GSimpleGA, Selectors, Mutators
 from pymongo import MongoClient
-from bson.json_util import loads
-from functools import reduce
-from operator import add
-from random import shuffle, random, randrange, randint
-from itertools import groupby
-from operator import attrgetter
-from sys import maxint
-from pyevolve import G1DBinaryString, G1DList, GSimpleGA, Selectors, Mutators
-from math import tanh
-from defs import *
-from util import *
+
 from greedy_match import *
 
 
 ### ----------------------------------------- Genetic Evaluation Function ----------------------------------------- ###
 
 
-def eval_func(assignments, debug=0):
+def eval_func(assignments):
     # TODO(Alex): Implement evaluation function
+    sum = sum(assignments)
     placeholder_score = 1
     return placeholder_score
 
@@ -127,6 +105,7 @@ for i in range(num_hackers):
 
 # The evaluator function (objective function)
 hacker_assignments.evaluator.set(eval_func)
+hacker_assignments.mutator.set(Mutators.G1DListMutatorSwap)
 
 # Genetic Algorithm Instance
 ga = GSimpleGA.GSimpleGA(hacker_assignments)
