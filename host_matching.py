@@ -30,69 +30,10 @@ from greedy_match import *
 ### ----------------------------------------- Genetic Evaluation Function ----------------------------------------- ###
 
 
-def eval_func(host_flips, debug=0):
-    assignments = greedy_match(hackers, hosts, host_flips)
-    score = 0.0
-
-    max_cap = num_hackers
-    if num_hackers > total_host_capacity:
-        max_cap = total_host_capacity
-
-    assigned_hosts = {}
-    num_team_rooms = {}
-    for hack, host in assignments:
-        if host not in assigned_hosts:
-            assigned_hosts[host] = 0
-        assigned_hosts[host] += 1
-
-        if hack.team not in num_team_rooms:
-            num_team_rooms[hack.team] = []
-        if host.id not in num_team_rooms[hack.team]:
-            num_team_rooms[hack.team].append(host.id)
-
-    # want assignments to be same length as max_cap, so utilizing total capacity
-    # needed if more hackers than hosts
-    cap_waste = max_cap - len(assignments)  # put this in some tan function
-    cap_waste_score = -20 * (tanh(0.05 * cap_waste) - 1)
-    if debug > 0:
-        print("Capacity: " + str(cap_waste_score))
-    score += cap_waste_score
-
-    # would rather waste smaller rooms than larger rooms, also put in some tan function
-    room_waste = 0
-    num_room_waste = 0
-    for h in hosts:
-        if h not in assigned_hosts:
-            room_waste += h.capacity
-            num_room_waste += 1
-    room_waste_score = -20 * (tanh(0.05 * room_waste) - 1)
-    if debug > 0:
-        print("    Room: " + str(room_waste_score) + " Num room wasted: " + str(num_room_waste))
-    score += room_waste_score
-
-    # minimum number of rooms to break a team into is the number of teams
-    min_num_team_rooms = len(num_team_rooms)
-    iter_num_team_rooms = 0
-
-    for team in num_team_rooms:
-        iter_num_team_rooms += len(num_team_rooms[team])
-        if debug > 1:
-            print(team)
-
-    num_team_splits = iter_num_team_rooms - min_num_team_rooms
-    team_score = -20 * (tanh(0.05 * num_team_splits) - 1)
-
-    if debug > 0:
-        print("    Team: " + str(team_score) + " Num above optim: " + str(num_team_splits))
-
-    score += team_score
-    if debug > 0:
-        if debug > 1:
-            print(str(num_team_splits) + " Ideal: " + str(min_num_team_rooms))
-        return (assignments, score)
-
-    return score
-
+def eval_func(assignments, debug=0):
+    # TODO(Alex): Implement evaluation function
+    placeholder_score = 1
+    return placeholder_score
 
 
 ## ---------- Constants ---------- ##
@@ -117,8 +58,8 @@ db = client['localhost-optim']
 hackers = [Hacker(d) for d in db['parties'].find()]
 hosts = [Host(d) for d in db['rooms'].find()]
 
-hackers = sorted(hackers, key=lambda pair: pair[0].id)
-hosts = sorted(hosts, key=lambda pair: pair[0].id)
+hackers = sorted(hackers, key=lambda hacker: hacker.id)
+hosts = sorted(hosts, key=lambda host: host.id)
 
 ## ---------- Create Subsets ---------- ##
 
