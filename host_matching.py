@@ -1,20 +1,36 @@
 import heapq
+import sys
+import pyevolve
+import numpy as np
+import numpy.ma as ma
+import pymongo
+import bson
+import sys
+import heapq
+import networkx as nx
 
-from math import tanh
-from pyevolve import G1DBinaryString
-from pyevolve import GSimpleGA
-from pyevolve import Mutators
-from pyevolve import Selectors
+from bson.codec_options import CodecOptions
+from bson import Binary, Code
+from bson.json_util import dumps
 from pymongo import MongoClient
+from bson.json_util import loads
+from functools import reduce
+from operator import add
+from random import shuffle, random, randrange, randint
+from itertools import groupby
+from operator import attrgetter
+from sys import maxint
+from pyevolve import G1DBinaryString, G1DList, GSimpleGA, Selectors, Mutators
+from math import tanh
 from defs import *
-from greedy_match import *
 from util import *
+from greedy_match import *
 
 
-### ----------------------------------------- Genetic Evaluation Functions ----------------------------------------- ###
+### ----------------------------------------- Genetic Evaluation Function ----------------------------------------- ###
 
 
-def fairness_eval_func(host_flips, debug=0):
+def eval_func(host_flips, debug=0):
     assignments = greedy_match(hackers, hosts, host_flips)
     score = 0.0
 
@@ -81,12 +97,8 @@ def fairness_eval_func(host_flips, debug=0):
 
 ## ---------- Constants ---------- ##
 
-GENS_STAGE_1 = 1000
-POPULATION_STAGE_1 = 100
-
-GENS_STAGE 2 = 1000
-POPULATION_STAGE_1
-
+NUM_GENS = 1000
+POPULATION_SIZE = 100
 
 ### ----------------------------------------------------- Main ----------------------------------------------------- ###
 
@@ -104,6 +116,9 @@ db = client['localhost-optim']
 
 hackers = [Hacker(d) for d in db['parties'].find()]
 hosts = [Host(d) for d in db['rooms'].find()]
+
+hackers = sorted(hackers, key=lambda pair: pair[0].id)
+hosts = sorted(hosts, key=lambda pair: pair[0].id)
 
 ## ---------- Create Subsets ---------- ##
 
@@ -140,28 +155,40 @@ num_np_hosts = num_hosts - num_gp_hosts
 
 ## ---------- (Deterministic) Greedy Algorithm ---------- ##
 
-# TODO(Ben): Implement
+# TODO(Ben): Replace with seeding function and iterate over seeds
+assignments = greedy_match(hackers, hosts)
 
 
 ## ---------- Genetic Algorithm ---------- ##
 
-# TODO(Ben): Implement
+# Sort the assignments by their hacker id, same order as the hackers list
 
-# Genome is a bit string of the index of np
-mutated_hosts = G1DBinaryString.G1DBinaryString(num_np_hosts)
+assignments = sorted(assignments, key=lambda pair: pair[0].id)
+
+# Hacker assignment is the mapping between hacker index and host index
+hacker_assignments = G1DList.G1DList(num_hackers)
+
+# Initialise hacker_assignments to the outcome of the greedy algorithm
+for i in range(num_hackers):
+    # Find the host index
+    try:
+        host_index = hosts.index(hackers[i])
+    except Exception as e:
+        # The hacker in unmatched
+        host_index = -1
+    hacker_assignments.append(host_index)
 
 # The evaluator function (objective function)
-mutated_hosts.evaluator.set(fairness_eval_func)
-mutated_hosts.mutator.set(Mutators.G1DBinaryStringMutatorFlip)
+hacker_assignments.evaluator.set(eval_func)
 
 # Genetic Algorithm Instance
-ga = GSimpleGA.GSimpleGA(mutated_hosts)
-ga.selector.set(Selectors.GTournamentSelector)
-ga.setGenerations(GENS_STAGE_1)
-ga.setPopulationSize(POPULATION_STAGE_1)
+ga = GSimpleGA.GSimpleGA(hacker_assignments)
+ga.selector.set(Selectors.GTournamentSelector) # TODO(Ben): Verify if this is the right selector
+ga.setGenerations(NUM_GENS)
+ga.setPopulationSize(POPULATION_SIZE)
 
 # Do the evolution, with stats dump
-ga.evolve(freq_stats=GENS_STAGE_1/10)
+ga.evolve(freq_stats=NUM_GENS/10)
 
 best = ga.bestIndividual()
 

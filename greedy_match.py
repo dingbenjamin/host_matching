@@ -5,6 +5,7 @@ import heapq
 import random
 
 from defs import *
+from util import *
 from random import shuffle
 
 # match Inflexible Hackers

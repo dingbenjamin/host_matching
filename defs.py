@@ -1,7 +1,8 @@
 ### Class Definitions ###
 
-from random import randint
+import sys
 
+from random import randint
 
 ## Classes ##
 
