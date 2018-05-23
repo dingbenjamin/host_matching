@@ -155,6 +155,7 @@ num_np_hosts = num_hosts - num_gp_hosts
 
 ## ---------- (Deterministic) Greedy Algorithm ---------- ##
 
+
 # TODO(Ben): Replace with seeding function and iterate over seeds
 assignments = greedy_match(hackers, hosts)
 
@@ -169,14 +170,19 @@ assignments = sorted(assignments, key=lambda pair: pair[0].id)
 hacker_assignments = G1DList.G1DList(num_hackers)
 
 # Initialise hacker_assignments to the outcome of the greedy algorithm
+assignments_index = 0
 for i in range(num_hackers):
-    # Find the host index
-    try:
-        host_index = hosts.index(hackers[i])
-    except Exception as e:
-        # The hacker in unmatched
+    hacker = hackers[i]
+    if hacker == assignments[assignments_index][0]:
+        # The hacker was assigned
+        host = assignments[assignments_index][1]
+        host_index = hosts.index(host)
+        assignments_index += 1
+    else:
+        # The hacker was not assigned
         host_index = -1
     hacker_assignments.append(host_index)
+# Now hacker_assignments is in the same order as hackers
 
 # The evaluator function (objective function)
 hacker_assignments.evaluator.set(eval_func)
