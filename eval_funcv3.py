@@ -49,7 +49,7 @@ def eval_func(matching, dev=0):
     print("Gender prefs: " + str(score_gender_mismatches))
     print("   Sleep var: " + str(score_sleeptime))
     print("-----------------------------")
-    print("Total Score " + str(score))
+    print("Total Score " + str(score) + "/80") #80 is max possible score
 
   return score
 
