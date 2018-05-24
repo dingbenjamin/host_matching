@@ -81,7 +81,7 @@ def calc_gender_mismatch(host_to_hack):
 def calc_sleeptime_diff(host_to_hack):
   total_sleeptime_diff = 0.0
   for room in host_to_hack:
-    for hack in host_to_hack[room]
+    for hack in host_to_hack[room]:
       if room.bedtime < hack.bedtime:
         total_sleeptime_diff += (hack.bedtime - room.bedtime) ** 2
   return total_sleeptime_diff
