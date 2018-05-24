@@ -135,10 +135,12 @@ def mutate_genome(genome, **args):
 
 ## ---------- Constants ---------- ##
 
-NUM_GENS = 10000
-POPULATION_SIZE = 202
-MUTATION_RATE = 0.6
-CROSSOVER_RATE = 0.2
+NUM_GENS = 200
+POPULATION_SIZE = 200
+MUTATION_RATE = 0.03
+CROSSOVER = Crossovers.G1DListCrossoverCutCrossfill
+CROSSOVER_RATE = 0.8
+SELECTOR = Selectors.GRouletteWheel #TODO(Ben): Tournament or nah?
 
 ### ----------------------------------------------------- Main ----------------------------------------------------- ###
 
@@ -220,7 +222,7 @@ hackers = sorted(hackers, key=lambda hacker: hacker.id)
 hacker_assignments = G1DList.G1DList(num_hackers)
 hacker_assignments.evaluator.set(eval_func)
 hacker_assignments.mutator.set(mutate_genome)
-hacker_assignments.crossover.set(Crossovers.G1DListCrossoverCutCrossfill)
+hacker_assignments.crossover.set(CROSSOVER)
 
 # Set some things to global for the init function to access
 global_hosts = hosts
@@ -229,8 +231,7 @@ hacker_assignments.initializator.set(init_genome)
 
 # Genetic Algorithm Instance
 ga = GSimpleGA.GSimpleGA(hacker_assignments)
-# TODO(Ben): Verify if this is the right selector
-ga.selector.set(Selectors.GTournamentSelector)
+ga.selector.set(SELECTOR)
 ga.setGenerations(NUM_GENS)
 ga.setCrossoverRate(CROSSOVER_RATE)
 ga.setPopulationSize(POPULATION_SIZE)
