@@ -2,6 +2,9 @@ from math import tanh
 from random import choice
 
 import numpy as np
+import networkx as nx
+import matplotlib.pyplot as plt
+
 from numpy.linalg import norm
 from numpy.random import choice
 from pyevolve import G1DList, GSimpleGA, Selectors, Crossovers
@@ -46,9 +49,8 @@ def eval_func(matching, dev=0):
     total_team_split = calc_team_division(team_to_hosts,dev=dev)
     score_team_split = -25 * (tanh(0.05 * total_team_split-2) - 1)
 
-    # total_gender_mismatches = calc_gender_mismatch(host_to_hack)
-    # score_gender_mismatches = -13 * (tanh(0.1* (total_gender_mismatches -15))- 1)
-    score_gender_mismatches = 0
+    total_gender_mismatches = calc_gender_mismatch(host_to_hack)
+    score_gender_mismatches = -13 * (tanh(0.1* (total_gender_mismatches -15))- 1)
 
     total_sleeptime_diff = calc_sleeptime_diff(host_to_hack)
     score_sleeptime = -25 * (tanh(0.0025 * total_sleeptime_diff) - 1)
@@ -135,7 +137,7 @@ def mutate_genome(genome, **args):
 
 ## ---------- Constants ---------- ##
 
-NUM_GENS = 200
+NUM_GENS = 1000
 POPULATION_SIZE = 200
 MUTATION_RATE = 0.03
 CROSSOVER = Crossovers.G1DListCrossoverCutCrossfill
@@ -242,5 +244,44 @@ ga.setMutationRate(MUTATION_RATE)
 ga.evolve(freq_stats=NUM_GENS/10)
 
 best = ga.bestIndividual()
-
+best_assignments = [(hackers[i], hosts[best[i]]) for i in range(len(best))]
 print(best)
+
+## ---------- Visualisation ---------- ##
+# For running in a notebook
+
+# Add Nodes
+g = nx.Graph()
+g.add_nodes_from(hosts)
+# Don't visualise the fake hackers
+real_hackers = [hacker for hacker in hackers if not hacker.is_fake]
+g.add_nodes_from(real_hackers)
+num_hackers = len(real_hackers)
+
+# Add Edges
+for hacker, host in best_assignments:
+  g.add_edge(hacker, host)
+
+# Labels
+labels = {}
+for host in hosts:
+  labels[host] = str(host.fill) + "/" + str(host.capacity)
+
+# Color the nodes
+colors = []
+for node in g.nodes():
+  if "Hacker" in str(type(node)):
+    colors.append('b')
+  elif not node.fill == 0:
+    colors.append('r')
+  elif node.fill > node.capacity:
+    colors.append('r')
+  else:
+    colors.append('g')
+
+# Draw
+plt.figure(figsize=(25,25))
+plt.subplot(111)
+nx.draw_spring(g, with_labels = True, font_weight='bold', node_color=colors, \
+               labels=labels, k = 5, iterations = 500, scale = 5)
+plt.show()
