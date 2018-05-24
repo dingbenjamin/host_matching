@@ -46,7 +46,7 @@ def eval_func(matching, dev=0):
     total_cap_var = calc_fullness_var(host_to_hack)
     score_cap_var = -25 * (tanh(0.05 * total_cap_var) - 1)
 
-    total_team_split = calc_team_division(team_to_hosts,dev=dev)
+    total_team_split = calc_team_division(team_to_hosts, dev=dev)
     score_team_split = -25 * (tanh(0.05 * total_team_split-2) - 1)
 
     total_gender_mismatches = calc_gender_mismatch(host_to_hack)
@@ -70,7 +70,7 @@ def eval_func(matching, dev=0):
         print(" Team splits: " + str(score_team_split))
         print("Gender prefs: " + str(score_gender_mismatches))
         print("   Sleep var: " + str(score_sleeptime))
-        print("-----------------------------")
+        print("-----------------------------"
         print("Total Score " + str(score) + "/80")  # 80 is max possible score
 
     return score
@@ -78,11 +78,11 @@ def eval_func(matching, dev=0):
 
 def init_genome(genome, **args):
     # Initialise hacker_assignments to the outcome of the greedy algorithm
-    genome.genomeList = []
+    genome.genomeList=[]
 
     for i in range(len(global_assignments)):
         # hackers and assignments should be 1-1 mapped via index
-        host_index = global_hosts.index(global_assignments[i][1])
+        host_index=global_hosts.index(global_assignments[i][1])
         genome.genomeList.append(host_index)
 
 
@@ -99,7 +99,7 @@ def mutate_genome(genome, **args):
         return [i for i, x in enumerate(genome) if hackers[x] in subset]
 
     def mutate_subset(subset):
-        mutations = 0
+        mutations=0
         for idx in xrange(len(subset)):
             if Util.randomFlipCoin(args["pmut"]):
                 Util.listSwapElement(
@@ -113,22 +113,23 @@ def mutate_genome(genome, **args):
 
     if args["pmut"] <= 0.0:
         return 0
-    listSize = len(genome)
-    mutations = args["pmut"] * listSize
+    listSize=len(genome)
+    mutations=args["pmut"] * listSize
 
     # 1. Find subsets to do mutations in.
-    m_gp = indices_of_subset(m_gp_assigned_hackers)
-    f_gp = indices_of_subset(f_gp_assigned_hackers)
-    np_ = indices_of_subset(np_assigned_hackers)
+    m_gp=indices_of_subset(m_gp_assigned_hackers)
+    f_gp=indices_of_subset(f_gp_assigned_hackers)
+    np_=indices_of_subset(np_assigned_hackers)
 
     # 2. Run random mutations on each subset.
     if mutations < 1.0:
-        mutations = mutate_subset(m_gp) + mutate_subset(f_gp) + mutate_subset(np_)
+        mutations=mutate_subset(
+            m_gp) + mutate_subset(f_gp) + mutate_subset(np_)
     else:
         for _ in xrange(int(round(mutations))):
-            a = [m_gp, f_gp, np_]
-            len_a = np.array(map(len, a))
-            subset = choice(a, p=(len_a / norm(len_a, ord=1)))
+            a=[m_gp, f_gp, np_]
+            len_a=np.array(map(len, a))
+            subset=choice(a, p=(len_a / norm(len_a, ord=1)))
             Util.listSwapElement(genome, randint(0, len(subset) - 1),
                                  randint(0, len(subset) - 1))
 
@@ -150,59 +151,39 @@ SELECTOR = Selectors.GRouletteWheel #TODO(Ben): Tournament or nah?
 ## ---------- Data Import ---------- ##
 
 
-client = MongoClient('ds119150.mlab.com',
+client=MongoClient('ds119150.mlab.com',
                      port=19150,
                      username='user',
                      password='idontreallycare',
                      authSource='localhost-optim',
                      authMechanism='SCRAM-SHA-1')
-db = client['localhost-optim']
+db=client['localhost-optim']
 
-hackers = [Hacker(d) for d in db['parties'].find()]
-hosts = [Host(d) for d in db['rooms'].find()]
+hackers=[Hacker(d) for d in db['parties'].find()]
+hosts=[Host(d) for d in db['rooms'].find()]
 
-hackers = sorted(hackers, key=lambda hacker: hacker.id)
-hosts = sorted(hosts, key=lambda host: host.id)
-
-## ---------- Create Subsets ---------- ##
-
-
-m_gp_hosts = list(filter(host_type("M", True), hosts))
-f_gp_hosts = list(filter(host_type("F", True), hosts))
-
-m_np_hosts = list(filter(host_type("M", False), hosts))
-f_np_hosts = list(filter(host_type("F", False), hosts))
-
-for l in [m_gp_hosts, f_gp_hosts, m_np_hosts, f_np_hosts]:
-    heapq.heapify(l)
-
-len(m_gp_hosts), len(f_gp_hosts), len(m_np_hosts), len(f_np_hosts)
-
-m_gp_hackers = list(filter(hacker_type("M", True), hackers))
-f_gp_hackers = list(filter(hacker_type("F", True), hackers))
-
-m_np_hackers = list(filter(hacker_type("M", False), hackers))
-f_np_hackers = list(filter(hacker_type("F", False), hackers))
+hackers=sorted(hackers, key=lambda hacker: hacker.id)
+hosts=sorted(hosts, key=lambda host: host.id)
 
 ## ---------- Initialise Metrics ---------- ##
 
-
-total_host_capacity = 0
+total_host_capacity=0
 for host in hosts:
     total_host_capacity += host.capacity
 
 # TODO(Ben): Update this number after fake hackers are inputted
-num_hackers = len(hackers)
-num_hosts = len(hosts)
-num_gp_hosts = sum(host.gender_pref == True for host in hosts)
-num_np_hosts = num_hosts - num_gp_hosts
+num_hackers=len(hackers)
+num_hosts=len(hosts)
+num_gp_hosts=sum(host.gender_pref == True for host in hosts)
+num_np_hosts=num_hosts - num_gp_hosts
 
 
 ## ---------- (Deterministic) Greedy Algorithm ---------- ##
 
 # TODO(Ben): Replace with seeding function and iterate over seeds
 
-assignments, m_gp_assigned_hackers, f_gp_assigned_hackers, np_assigned_hackers = greedy_match(hackers, hosts)
+assignments, m_gp_assigned_hackers, f_gp_assigned_hackers, np_assigned_hackers=greedy_match(
+    hackers, hosts)
 # NOTE: greedy_match mutates the fill attribute of hosts, which we use below
 
 
@@ -210,25 +191,25 @@ assignments, m_gp_assigned_hackers, f_gp_assigned_hackers, np_assigned_hackers =
 
 # Add Fake Hackers to represent unused spaces.
 for host in hosts:
-    fakes_needed = host.capacity - host.fill
+    fakes_needed=host.capacity - host.fill
     for i in range(fakes_needed):
-        fake_hacker = FHacker()
+        fake_hacker=FHacker()
         assignments.append((fake_hacker, host))
         hackers.append(fake_hacker)
 
 # Sort the assignments by their hacker id, same order as the hackers list
-assignments = sorted(assignments, key=lambda pair: pair[0].id)
-hackers = sorted(hackers, key=lambda hacker: hacker.id)
+assignments=sorted(assignments, key=lambda pair: pair[0].id)
+hackers=sorted(hackers, key=lambda hacker: hacker.id)
 
 # Hacker assignment is the mapping between hacker index and host index
-hacker_assignments = G1DList.G1DList(num_hackers)
+hacker_assignments=G1DList.G1DList(num_hackers)
 hacker_assignments.evaluator.set(eval_func)
 hacker_assignments.mutator.set(mutate_genome)
 hacker_assignments.crossover.set(CROSSOVER)
 
 # Set some things to global for the init function to access
-global_hosts = hosts
-global_assignments = assignments
+global_hosts=hosts
+global_assignments=assignments
 hacker_assignments.initializator.set(init_genome)
 
 # Genetic Algorithm Instance
