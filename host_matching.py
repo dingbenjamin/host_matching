@@ -1,6 +1,12 @@
-from pyevolve import G1DList, GSimpleGA, Selectors, Mutators, Initializators
-from pymongo import MongoClient
 from math import tanh
+from random import choice
+
+import numpy as np
+from numpy.linalg import norm
+from numpy.random import choice
+from pyevolve import G1DList, GSimpleGA, Selectors, Crossovers
+from pyevolve import Util
+from pymongo import MongoClient
 
 from eval_func import *
 from greedy_match import *
@@ -40,8 +46,9 @@ def eval_func(matching, dev=0):
     total_team_split = calc_team_division(team_to_hosts,dev=dev)
     score_team_split = -25 * (tanh(0.05 * total_team_split-2) - 1)
 
-    total_gender_mismatches = calc_gender_mismatch(host_to_hack)
-    score_gender_mismatches = -13 * (tanh(0.1* (total_gender_mismatches -15))- 1)
+    # total_gender_mismatches = calc_gender_mismatch(host_to_hack)
+    # score_gender_mismatches = -13 * (tanh(0.1* (total_gender_mismatches -15))- 1)
+    score_gender_mismatches = 0
 
     total_sleeptime_diff = calc_sleeptime_diff(host_to_hack)
     score_sleeptime = -25 * (tanh(0.0025 * total_sleeptime_diff) - 1)
@@ -77,11 +84,61 @@ def init_genome(genome, **args):
         genome.genomeList.append(host_index)
 
 
+def mutate_genome(genome, **args):
+    """
+    Mutations that respect gender preference, by mutating only within
+    gender/gender preference groups.
+    """
+    global m_gp_assigned_hackers
+    global f_gp_assigned_hackers
+    global np_assigned_hackers
+
+    def indices_of_subset(subset):
+        return [i for i, x in enumerate(genome) if hackers[x] in subset]
+
+    def mutate_subset(subset):
+        mutations = 0
+        for idx in xrange(len(subset)):
+            if Util.randomFlipCoin(args["pmut"]):
+                Util.listSwapElement(
+                    genome,
+                    subset[idx],
+                    subset[rand_randint(0, len(subset) - 1)]
+                )
+                mutations += 1
+
+        return mutations
+
+    if args["pmut"] <= 0.0:
+        return 0
+    listSize = len(genome)
+    mutations = args["pmut"] * listSize
+
+    # 1. Find subsets to do mutations in.
+    m_gp = indices_of_subset(m_gp_assigned_hackers)
+    f_gp = indices_of_subset(f_gp_assigned_hackers)
+    np_ = indices_of_subset(np_assigned_hackers)
+
+    # 2. Run random mutations on each subset.
+    if mutations < 1.0:
+        mutations = mutate_subset(m_gp) + mutate_subset(f_gp) + mutate_subset(np_)
+    else:
+        for _ in xrange(int(round(mutations))):
+            a = [m_gp, f_gp, np_]
+            len_a = np.array(map(len, a))
+            subset = choice(a, p=(len_a / norm(len_a, ord=1)))
+            Util.listSwapElement(genome, randint(0, len(subset) - 1),
+                                 randint(0, len(subset) - 1))
+
+    return int(mutations)
+
+
 ## ---------- Constants ---------- ##
 
-NUM_GENS = 1000
-POPULATION_SIZE = 100
-MUTATION_RATE = 0.3
+NUM_GENS = 10000
+POPULATION_SIZE = 202
+MUTATION_RATE = 0.6
+CROSSOVER_RATE = 0.2
 
 ### ----------------------------------------------------- Main ----------------------------------------------------- ###
 
@@ -139,9 +196,9 @@ num_np_hosts = num_hosts - num_gp_hosts
 
 ## ---------- (Deterministic) Greedy Algorithm ---------- ##
 
-
 # TODO(Ben): Replace with seeding function and iterate over seeds
-assignments = greedy_match(hackers, hosts)
+
+assignments, m_gp_assigned_hackers, f_gp_assigned_hackers, np_assigned_hackers = greedy_match(hackers, hosts)
 # NOTE: greedy_match mutates the fill attribute of hosts, which we use below
 
 
@@ -162,7 +219,8 @@ hackers = sorted(hackers, key=lambda hacker: hacker.id)
 # Hacker assignment is the mapping between hacker index and host index
 hacker_assignments = G1DList.G1DList(num_hackers)
 hacker_assignments.evaluator.set(eval_func)
-hacker_assignments.mutator.set(Mutators.G1DListMutatorSwap)
+hacker_assignments.mutator.set(mutate_genome)
+hacker_assignments.crossover.set(Crossovers.G1DListCrossoverCutCrossfill)
 
 # Set some things to global for the init function to access
 global_hosts = hosts
@@ -174,9 +232,10 @@ ga = GSimpleGA.GSimpleGA(hacker_assignments)
 # TODO(Ben): Verify if this is the right selector
 ga.selector.set(Selectors.GTournamentSelector)
 ga.setGenerations(NUM_GENS)
-ga.setCrossoverRate(0)
+ga.setCrossoverRate(CROSSOVER_RATE)
 ga.setPopulationSize(POPULATION_SIZE)
 ga.setMutationRate(MUTATION_RATE)
+
 
 # Do the evolution, with stats dump
 ga.evolve(freq_stats=NUM_GENS/10)

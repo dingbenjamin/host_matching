@@ -9,6 +9,8 @@ from random import shuffle
 
 def match_gp_to_gp(hackers, gp_hosts, np_hosts, assignments):
     """Match inflexible hackers to inflexible and flexible hosts."""
+    hackers_assigned = set()
+
     while len(hackers) > 0:
         hacker = hackers.pop()
 
@@ -16,13 +18,18 @@ def match_gp_to_gp(hackers, gp_hosts, np_hosts, assignments):
         host = None
         if len(gp_hosts) > 0:
             host = heapq.heappop(gp_hosts)
+        elif len(np_hosts) > 0:
+            host = heapq.heappop(gp_hosts)
         else:  # no more hosts available
             break
 
         # B. Assign the Host
         match(hacker, host, assignments)
+        hackers_assigned.add(hacker)
         if (host.fill < host.capacity):
             heapq.heappush(gp_hosts, host)
+
+    return hackers_assigned
 
 
 def match_np_hackers_pref_own_gender(hackers, gp_hosts, np_hosts, o_np_hosts, assignments):
@@ -54,6 +61,7 @@ def match_np_hackers_pref_own_gender(hackers, gp_hosts, np_hosts, o_np_hosts, as
 
 def match_np_hackers(hackers, gp_hosts, np_hosts, assignments):
     """"Match Flexible Hackers, without regard for NP host gender."""
+    hackers_assigned = set()
     while len(hackers) > 0:
         hacker = hackers.pop()
 
@@ -69,8 +77,11 @@ def match_np_hackers(hackers, gp_hosts, np_hosts, assignments):
         # B. Find and match the host
         host = heapq.heappop(hosts_group)
         match(hacker, host, assignments)
+        hackers_assigned.add(hacker)
         if (host.fill < host.capacity):
             heapq.heappush(hosts_group, host)
+
+    return hackers_assigned
 
 
 def replace_gp_hackers(gender, gp_hackers, np_hackers, assignments):
@@ -111,6 +122,9 @@ def greedy_match(hackers, hosts):
     Perform a greedy matching on hackers and hosts.
     Return the assignments made in the matching.
     """
+    global m_gp_assigned_hackers
+    global f_gp_assigned_hackers
+    global np_assigned_hackers
 
     assignments = []
     # NOTE: Not thread-safe
@@ -129,14 +143,18 @@ def greedy_match(hackers, hosts):
     m_np_hosts = list(filter(host_type("M", False), hosts))
     f_np_hosts = list(filter(host_type("F", False), hosts))
 
+    m_gp_assigned_hackers = set()
+    f_gp_assigned_hackers = set()
+    np_assigned_hackers = set()
+
     # Step 1: Match Inflexible Hackers
-    match_gp_to_gp(m_gp_hackers, m_gp_hosts, m_np_hosts, assignments)
-    match_gp_to_gp(f_gp_hackers, f_gp_hosts, f_np_hosts, assignments)
+    m_gp_assigned_hackers |= match_gp_to_gp(m_gp_hackers, m_gp_hosts, m_np_hosts, assignments)
+    f_gp_assigned_hackers |= match_gp_to_gp(f_gp_hackers, f_gp_hosts, f_np_hosts, assignments)
 
     # Step 2: Match Flexible Hackers
     np_hosts = list(heapq.merge(m_np_hosts, f_np_hosts))
-    match_np_hackers(m_np_hackers, m_gp_hosts, np_hosts, assignments)
-    match_np_hackers(f_np_hackers, f_gp_hosts, np_hosts, assignments)
+    np_assigned_hackers |= match_np_hackers(m_np_hackers, m_gp_hosts, np_hosts, assignments)
+    np_assigned_hackers |= match_np_hackers(f_np_hackers, f_gp_hosts, np_hosts, assignments)
 
     # Step 3: Kicking
     replace_gp_hackers("M", m_gp_hackers, m_np_hackers, assignments)
@@ -145,4 +163,4 @@ def greedy_match(hackers, hosts):
     # Step 4: Shuffling
     # shuffle_np(assignments)
 
-    return assignments
+    return assignments, m_gp_assigned_hackers, f_gp_assigned_hackers, np_assigned_hackers
