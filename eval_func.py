@@ -3,8 +3,8 @@
 
 from collections import Counter
 
-SINGLE_FAKE_FULL = 0.5
-DOUBLE_FAKE_FULL = 0.3
+SINGLE_FAKE_FULL = 0.8
+DOUBLE_FAKE_FULL = 0.4
 
 # params
 # total_cap_var
@@ -33,20 +33,22 @@ def calc_fullness_var(host_to_hack):
             room_fullness = len(host_to_hack[host]) / float(host.capacity)
             total_cap_var += (room_fullness - avg_fullness)**2
         elif host.capacity > 1:
-            total_cap_var += (SINGLE_FAKE_FULL - avg_fullness)**2
-        else:
             total_cap_var += (DOUBLE_FAKE_FULL - avg_fullness)**2
+        else:
+            total_cap_var += (SINGLE_FAKE_FULL - avg_fullness)**2
     return total_cap_var
 
 
 # calculate team distribution loss
-def calc_team_division(team_to_hosts):
+def calc_team_division(team_to_hosts,dev=0):
     total_team_split = 0.0
     for team in team_to_hosts:
         teammates_per_room = Counter(team_to_hosts[team])
         for x in teammates_per_room:
             total_team_split += 1.0/teammates_per_room[x]
         total_team_split -= 1.0/len(team_to_hosts[team])
+        if dev>1:
+          print(total_team_split)
     return total_team_split
 
 

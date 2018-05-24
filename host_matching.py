@@ -21,30 +21,30 @@ def eval_func(matching, dev=0):
     host_to_hack = {}
     team_to_hosts = {}
     for e in range(len(matching)):
-        # dictionary of hosts to lists of hackers who they are hosting
-        if hosts[matching[e]] not in host_to_hack:
-            host_to_hack[hosts[matching[e]]] = []
+      # dictionary of hosts to lists of hackers who they are hosting
+      if hosts[matching[e]] not in host_to_hack:
+        host_to_hack[hosts[matching[e]]] = []
 
-        # TODO(Ben): Add fakeness
-        if hackers[e].is_fake == False:
-            host_to_hack[hosts[matching[e]]].append(hackers[e])
+      # TODO(Ben): Add fakeness
+      if hackers[e].is_fake == False:
+        host_to_hack[hosts[matching[e]]].append(hackers[e])
 
         # dictionary of teams to who is hosting its members
-    if hackers[e].team not in team_to_hosts:
+      if hackers[e].team not in team_to_hosts:
         team_to_hosts[hackers[e].team] = []
-    team_to_hosts[hackers[e].team].append(hosts[matching[e]])
+      team_to_hosts[hackers[e].team].append(hosts[matching[e]])
 
     total_cap_var = calc_fullness_var(host_to_hack)
-    score_cap_var = -20 * (tanh(0.1 * total_cap_var) - 1)
+    score_cap_var = -25 * (tanh(0.05 * total_cap_var) - 1)
 
-    total_team_split = calc_team_division(team_to_hosts)
-    score_team_split = -20 * (tanh(0.1 * total_team_split) - 1)
+    total_team_split = calc_team_division(team_to_hosts,dev=dev)
+    score_team_split = -25 * (tanh(0.05 * total_team_split-2) - 1)
 
     total_gender_mismatches = calc_gender_mismatch(host_to_hack)
-    score_gender_mismatches = -20 * (tanh(total_gender_mismatches))
+    score_gender_mismatches = -13 * (tanh(0.1* (total_gender_mismatches -15))- 1)
 
     total_sleeptime_diff = calc_sleeptime_diff(host_to_hack)
-    score_sleeptime = -20 * (tanh(0.1 * total_sleeptime_diff) - 1)
+    score_sleeptime = -25 * (tanh(0.0025 * total_sleeptime_diff) - 1)
 
     score = score_cap_var + score_team_split + \
         score_gender_mismatches + score_sleeptime
@@ -55,6 +55,7 @@ def eval_func(matching, dev=0):
         print("      Team splits: " + str(total_team_split))
         print("Gender mismatches: " + str(total_gender_mismatches))
         print("   Sleeptime diff: " + str(total_sleeptime_diff))
+        print("")
         print("  SCORE BREAKDOWN  ")
         print("Capacity var: " + str(score_cap_var))
         print(" Team splits: " + str(score_team_split))
@@ -80,7 +81,7 @@ def init_genome(genome, **args):
 
 NUM_GENS = 1000
 POPULATION_SIZE = 100
-MUTATION_RATE = 0.05
+MUTATION_RATE = 0.3
 
 ### ----------------------------------------------------- Main ----------------------------------------------------- ###
 
