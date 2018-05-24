@@ -11,6 +11,8 @@ class Hacker:
         self.gender = ("M" if doc['gender'] == "Male" else "F")
         self.gender_pref = doc['hasGenderPreference']
         self.team = int(doc.get('teamCode', randint(100, sys.maxsize)))
+        self.is_fake = False
+        self.bedtime = doc['sleepTime']
 
     def __str__(self):
         return "Hacker ID: {}\tGender: {}\tPref: {}".format(
@@ -20,12 +22,22 @@ class Hacker:
         return self.host.id < other.host.id
 
 
+class FHacker(Hacker):
+    """A class representing a FHacker, or a Fake Hacker."""
+
+    def __init__(self):
+        self.id = randint(100, sys.maxsize)
+        self.team = randint(100, sys.maxsize)
+        self.is_fake = True
+
+
 class Host:
     def __init__(self, doc):
         self.id = doc['_id']
         self.gender = ("M" if doc['gender'] == "Male" else "F")
         self.gender_pref = doc['hasGenderPreference']
         self.capacity = doc['capacity']
+        self.bedtime = doc['sleepTime']
         self.fill = 0
         self.flipped = False
 
