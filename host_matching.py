@@ -1,4 +1,4 @@
-from pyevolve import G1DList, GSimpleGA, Selectors, Mutators
+from pyevolve import G1DList, GSimpleGA, Selectors, Mutators, Initializators
 from pymongo import MongoClient
 
 from greedy_match import *
@@ -7,17 +7,36 @@ from greedy_match import *
 ### ----------------------------------------- Genetic Evaluation Function ----------------------------------------- ###
 
 
-def eval_func(assignments):
+def eval_func(hacker_assignments):
     # TODO(Alex): Implement evaluation function
-    sum = sum(assignments)
+    placeholder_sum = sum(hacker_assignments)
     placeholder_score = 1
     return placeholder_score
+
+
+def init_genome(genome, **args):
+    # Initialise hacker_assignments to the outcome of the greedy algorithm
+    genome.genomeList = []
+    assignments_index = 0
+    for i in range(global_num_hackers):
+        hacker = global_hackers[i]
+        if hacker == global_assignments[assignments_index][0]:
+            # The hacker was assigned
+            host = global_assignments[assignments_index][1]
+            host_index = global_hosts.index(host)
+            assignments_index += 1
+        else:
+            # The hacker was not assigned
+            host_index = -1
+        genome.genomeList.append(host_index)
+    # Now hacker_assignments is in the same order as hackers
 
 
 ## ---------- Constants ---------- ##
 
 NUM_GENS = 1000
 POPULATION_SIZE = 100
+MUTATION_RATE = 0.05
 
 ### ----------------------------------------------------- Main ----------------------------------------------------- ###
 
@@ -107,11 +126,21 @@ for i in range(num_hackers):
 hacker_assignments.evaluator.set(eval_func)
 hacker_assignments.mutator.set(Mutators.G1DListMutatorSwap)
 
+
+# Set some things to global for the init function to access
+global_num_hackers = num_hackers
+global_hackers = hackers
+global_hosts = hosts
+global_assignments = assignments
+hacker_assignments.initializator.set(init_genome)
+
 # Genetic Algorithm Instance
 ga = GSimpleGA.GSimpleGA(hacker_assignments)
 ga.selector.set(Selectors.GTournamentSelector) # TODO(Ben): Verify if this is the right selector
 ga.setGenerations(NUM_GENS)
+ga.setCrossoverRate(0)
 ga.setPopulationSize(POPULATION_SIZE)
+ga.setMutationRate(MUTATION_RATE)
 
 # Do the evolution, with stats dump
 ga.evolve(freq_stats=NUM_GENS/10)
