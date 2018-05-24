@@ -1,9 +1,6 @@
 import sys
 from random import randint
 
-## Classes ##
-#############
-
 
 class Hacker:
     def __init__(self, doc, team=None):
@@ -55,8 +52,7 @@ class Host:
             return -(self.fill / self.capacity)
 
 
-## Subsets ##
-
+# Subsets #
 
 def hacker_type(gender, gender_pref):
     return lambda h: h.gender == gender and h.gender_pref == gender_pref

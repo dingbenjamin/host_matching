@@ -4,10 +4,16 @@ from operator import add, attrgetter, itemgetter
 
 from pyevolve import (Crossovers, G1DList, GSimpleGA, Initializators, Mutators,
                       Selectors)
+from pyevolve.DBAdapters import DBFileCSV
 
 from defs import *
 from eval_func import *
 from greedy_match import *
+
+
+def greedy_match_for_genome(genome, hackers, hosts):
+    hackers_ordered = [hacker for _, hacker in sorted(zip(genome, hackers))]
+    return greedy_match(hackers_ordered, hosts)
 
 
 def evolve(hackers, hosts, num_gens, stat_freq, population_size, mutation_rate,
@@ -19,11 +25,9 @@ def evolve(hackers, hosts, num_gens, stat_freq, population_size, mutation_rate,
 
     def eval_func(genome, dev=0):
         # 1. Generate the matching.
-        hackers_ordered = [hacker for __,
-                           hacker in sorted(zip(genome, hackers))]
-        matching = greedy_match(hackers_ordered, hosts)[0]
+        matching = greedy_match_for_genome(genome, hackers, hosts)[0]
 
-        # 3. Preprocess for scoring.
+        # 2. Preprocess for scoring.
         host_to_hack = {}
         team_to_hosts = {}
         for hacker, host in matching:
@@ -37,7 +41,7 @@ def evolve(hackers, hosts, num_gens, stat_freq, population_size, mutation_rate,
                 team_to_hosts[hacker.team] = []
             team_to_hosts[hacker.team].append(host)
 
-        # 4. Do the scoring.
+        # 3. Do the scoring.
         total_cap_var = calc_fullness_var(host_to_hack)
         score_cap_var = -25 * (tanh(0.05 * total_cap_var) - 1)
 
@@ -81,6 +85,7 @@ def evolve(hackers, hosts, num_gens, stat_freq, population_size, mutation_rate,
 
     # Genetic Algorithm Instance
     ga = GSimpleGA.GSimpleGA(hacker_order)
+    ga.setDBAdapter(DBFileCSV(identify="stage_1", frequency=10, reset=True))
     ga.selector.set(selector)
     ga.setGenerations(num_gens)
     ga.setCrossoverRate(crossover_rate)
@@ -91,4 +96,9 @@ def evolve(hackers, hosts, num_gens, stat_freq, population_size, mutation_rate,
     # Do the evolution, with stats dump
     ga.evolve(freq_stats=stat_freq)
 
-    return ga.bestIndividual()
+    # Print outcome.
+    best = ga.bestIndividual()
+    eval_func(best, dev=1)
+    ga.printStats()
+
+    return best

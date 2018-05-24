@@ -32,7 +32,8 @@ def match_gp_to_gp(hackers, gp_hosts, np_hosts, assignments):
     return hackers_assigned
 
 
-def match_np_hackers_pref_own_gender(hackers, gp_hosts, np_hosts, o_np_hosts, assignments):
+def match_np_hackers_pref_own_gender(hackers, gp_hosts, np_hosts, o_np_hosts,
+                                     assignments):
     """
     Match flexible hackers to flexible and inflexible hosts.
     o_np_hosts refers to the other gender's hosts.
@@ -148,13 +149,17 @@ def greedy_match(hackers, hosts):
     np_assigned_hackers = set()
 
     # Step 1: Match Inflexible Hackers
-    m_gp_assigned_hackers |= match_gp_to_gp(m_gp_hackers, m_gp_hosts, m_np_hosts, assignments)
-    f_gp_assigned_hackers |= match_gp_to_gp(f_gp_hackers, f_gp_hosts, f_np_hosts, assignments)
+    m_gp_assigned_hackers |= match_gp_to_gp(
+        m_gp_hackers, m_gp_hosts, m_np_hosts, assignments)
+    f_gp_assigned_hackers |= match_gp_to_gp(
+        f_gp_hackers, f_gp_hosts, f_np_hosts, assignments)
 
     # Step 2: Match Flexible Hackers
     np_hosts = list(heapq.merge(m_np_hosts, f_np_hosts))
-    np_assigned_hackers |= match_np_hackers(m_np_hackers, m_gp_hosts, np_hosts, assignments)
-    np_assigned_hackers |= match_np_hackers(f_np_hackers, f_gp_hosts, np_hosts, assignments)
+    np_assigned_hackers |= match_np_hackers(
+        m_np_hackers, m_gp_hosts, np_hosts, assignments)
+    np_assigned_hackers |= match_np_hackers(
+        f_np_hackers, f_gp_hosts, np_hosts, assignments)
 
     # Step 3: Kicking
     replace_gp_hackers("M", m_gp_hackers, m_np_hackers, assignments)
@@ -163,4 +168,5 @@ def greedy_match(hackers, hosts):
     # Step 4: Shuffling
     # shuffle_np(assignments)
 
-    return assignments, m_gp_assigned_hackers, f_gp_assigned_hackers, np_assigned_hackers
+    return (assignments, m_gp_assigned_hackers, f_gp_assigned_hackers,
+            np_assigned_hackers)

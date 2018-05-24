@@ -24,14 +24,25 @@ hosts = sorted(hosts, key=lambda host: host.id)
 
 # ---------- Stage 1 ------------ #
 print("Stage 1: Evolving an optimal hacker insertion order for the algorithm.")
-best_assignments = stage_1.evolve(hackers,
-                                  hosts,
-                                  num_gens=20,
-                                  stat_freq=10,
-                                  population_size=150,
-                                  mutation_rate=0.03,
-                                  crossover_rate=0.8,
-                                  elitism=5,
-                                  selector=Selectors.GTournamentSelector)
+best_order = stage_1.evolve(hackers,
+                            hosts,
+                            num_gens=6,
+                            stat_freq=3,
+                            population_size=150,
+                            mutation_rate=0.03,
+                            crossover_rate=0.8,
+                            elitism=5,
+                            selector=Selectors.GTournamentSelector)
 
-best_assignments
+assignments = stage1.greedy_match_for_genome(best_order, hackers, hosts)
+
+print("Stage 2: Evolving from stage 1 to find minute improvements.")
+best_assignments = stage2.evolve(hackers,
+                                 hosts,
+                                 num_gens=20,
+                                 stat_freq=10,
+                                 population_size=150,
+                                 mutation_rate=0.03,
+                                 crossover_rate=0.8,
+                                 elitism=5,
+                                 selector=Selectors.GTournamentSelector)

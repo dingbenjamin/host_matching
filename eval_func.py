@@ -1,6 +1,3 @@
-### Evaluation Subfunctions ###
-
-
 from collections import Counter
 
 SINGLE_FAKE_FULL = 0.8
@@ -40,15 +37,15 @@ def calc_fullness_var(host_to_hack):
 
 
 # calculate team distribution loss
-def calc_team_division(team_to_hosts,dev=0):
+def calc_team_division(team_to_hosts, dev=0):
     total_team_split = 0.0
     for team in team_to_hosts:
         teammates_per_room = Counter(team_to_hosts[team])
         for x in teammates_per_room:
             total_team_split += 1.0/teammates_per_room[x]
         total_team_split -= 1.0/len(team_to_hosts[team])
-        if dev>1:
-          print(total_team_split)
+        if dev > 1:
+            print(total_team_split)
     return total_team_split
 
 
