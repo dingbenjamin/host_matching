@@ -1,6 +1,4 @@
-### Greedy Algorithm ###
-
-
+"""Greedy Algorithm"""
 import heapq
 import random
 
@@ -8,8 +6,9 @@ from defs import *
 from util import *
 from random import shuffle
 
-# match Inflexible Hackers
+
 def match_gp_to_gp(hackers, gp_hosts, np_hosts, assignments):
+    """Match inflexible hackers to inflexible and flexible hosts."""
     while len(hackers) > 0:
         hacker = hackers.pop()
 
@@ -26,9 +25,11 @@ def match_gp_to_gp(hackers, gp_hosts, np_hosts, assignments):
             heapq.heappush(gp_hosts, host)
 
 
-# match Flexible Hackers
 def match_np_hackers_pref_own_gender(hackers, gp_hosts, np_hosts, o_np_hosts, assignments):
-    # o_np_hosts refers to the other gender's hosts
+    """
+    Match flexible hackers to flexible and inflexible hosts.
+    o_np_hosts refers to the other gender's hosts.
+    """
 
     while len(hackers) > 0:
         hacker = hackers.pop()
@@ -51,8 +52,8 @@ def match_np_hackers_pref_own_gender(hackers, gp_hosts, np_hosts, o_np_hosts, as
             heapq.heappush(hosts_group, host)
 
 
-# match Flexible Hackers, without regard for NP host gender
 def match_np_hackers(hackers, gp_hosts, np_hosts, assignments):
+    """"Match Flexible Hackers, without regard for NP host gender."""
     while len(hackers) > 0:
         hacker = hackers.pop()
 
@@ -72,14 +73,16 @@ def match_np_hackers(hackers, gp_hosts, np_hosts, assignments):
             heapq.heappush(hosts_group, host)
 
 
-# Kicking
 def replace_gp_hackers(gender, gp_hackers, np_hackers, assignments):
+    """Kicking step, replacing GP hackers with NP ones."""
     if len(np_hackers) == 0:
         return
 
-    is_gp_hacker = lambda x: x[0].gender_pref and x[0].gender == gender
-    not_gp_hacker = lambda x: not is_gp_hacker(x)
-    to_hacker = lambda x: x[0]
+    def is_gp_hacker(x): return x[0].gender_pref and x[0].gender == gender
+
+    def not_gp_hacker(x): return not is_gp_hacker(x)
+
+    def to_hacker(x): return x[0]
 
     # A. Remove GP guests from assignments
     np_assignments = list(filter(not_gp_hacker, assignments))
@@ -89,7 +92,8 @@ def replace_gp_hackers(gender, gp_hackers, np_hackers, assignments):
     num_gp = len(gp_assignments)
     num_np = len(np_assignments)
 
-    replace_prob = num_np / (float)(num_gp + num_np)  # <--- this is giving some issues
+    # <--- this is giving some issues
+    replace_prob = num_np / (float)(num_gp + num_np)
     shuffle(np_hackers)
 
     # C. Randomly replace GP with NP hackers.
@@ -102,12 +106,15 @@ def replace_gp_hackers(gender, gp_hackers, np_hackers, assignments):
     return gp_assignments + np_assignments
 
 
-# Hybrid Matching
-# host_flips is a G1D Binary String
 def greedy_match(hackers, hosts):
+    """
+    Perform a greedy matching on hackers and hosts.
+    Return the assignments made in the matching.
+    """
+
     assignments = []
+    # NOTE: Not thread-safe
     for host in hosts:
-        # NOTE: Not thread-safe
         host.fill = 0
 
     m_gp_hackers = list(filter(hacker_type("M", True), hackers))
@@ -136,7 +143,6 @@ def greedy_match(hackers, hosts):
     replace_gp_hackers("F", f_gp_hackers, f_np_hackers, assignments)
 
     # Step 4: Shuffling
-    # TODO(Ben): Temporarily disabled
     # shuffle_np(assignments)
 
     return assignments
