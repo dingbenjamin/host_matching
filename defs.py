@@ -1,10 +1,8 @@
-### Class Definitions ###
-
 import sys
-
 from random import randint
 
 ## Classes ##
+#############
 
 
 class Hacker:
@@ -12,7 +10,7 @@ class Hacker:
         self.id = doc['_id']
         self.gender = ("M" if doc['gender'] == "Male" else "F")
         self.gender_pref = doc['hasGenderPreference']
-        self.team = int(doc.get('teamCode', randint(100,sys.maxsize)))
+        self.team = int(doc.get('teamCode', randint(100, sys.maxsize)))
 
     def __str__(self):
         return "Hacker ID: {}\tGender: {}\tPref: {}".format(
@@ -49,7 +47,7 @@ class Host:
 
 
 def hacker_type(gender, gender_pref):
-  return lambda h: h.gender == gender and h.gender_pref == gender_pref
+    return lambda h: h.gender == gender and h.gender_pref == gender_pref
 
 
 def host_type(gender, gender_pref):
@@ -57,4 +55,4 @@ def host_type(gender, gender_pref):
 
 
 def gender(gender):
-  return lambda h: h.gender == gender
+    return lambda h: h.gender == gender

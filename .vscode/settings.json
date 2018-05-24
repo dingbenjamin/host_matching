@@ -1,0 +1,15 @@
+{
+  "python.linting.pylintEnabled": false,
+  "python.pythonPath":
+    "/Users/caseychow/.local/share/virtualenvs/host_matching-l197DGer/bin/python",
+  "editor.formatOnSave": true,
+  "cSpell.words": ["heapq"],
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/*.pyc": true
+  }
+}
